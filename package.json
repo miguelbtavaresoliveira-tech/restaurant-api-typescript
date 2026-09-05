@@ -9,10 +9,12 @@
     "test:e2e": "vitest run --dir src --include '**/*.e2e.spec.ts'",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
-    "postinstall": "prisma skills sync || exit 0",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "prisma generate",
     "dev": "tsx watch src/server.ts",
     "lint:check": "prettier --check .",
-    "lint:fix": "prettier --write ."
+    "lint:fix": "prettier --write .",
+    "prepare": "husky"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -26,6 +28,7 @@
     "@fastify/jwt": "^10.2.2",
     "@prisma/adapter-mariadb": "^7.10.0",
     "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
     "fastify": "^5.12.1",
     "mysql2": "^3.24.2",
@@ -33,13 +36,15 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
     "@faker-js/faker": "^10.6.0",
-    "@prisma/client": "^6.19.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^26.4.0",
     "@types/nodemailer": "^8.0.1",
     "@vitest/coverage-v8": "^5.0.0",
     "dotenv": "^17.4.2",
+    "husky": "^9.1.7",
     "prettier": "^3.9.6",
     "prisma": "^6.19.3",
     "tsx": "^4.23.13",

@@ -1,0 +1,54 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    # Cria o contêiner do Postgres para o ambiente do CI
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: restaurante_test
+        ports:
+          - 5432:5432
+        # Aguarda o banco estar pronto para aceitar conexões
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # NOVO: Garante que não existem erros de tipagem no projeto
+      - name: Checar tipos do TypeScript
+        run: npx tsc --noEmit
+
+      - name: Rodar migrations do banco
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/restaurante_test?schema=public"
+        run: npx prisma migrate deploy
+
+      - name: Executar testes unitários e de integração
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/restaurante_test?schema=public"
+          JWT_SECRET: "chave_secreta_de_teste"
+        run: npm run test

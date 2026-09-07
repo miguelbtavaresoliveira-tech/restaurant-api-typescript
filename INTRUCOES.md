@@ -35,3 +35,23 @@ Setup & Compilação: O ambiente instala dependências (npm ci), gera as tipagen
 Migrations & Testes: As migrations criam as tabelas no banco temporário e o Vitest roda as suítes de testes unitários e E2E.
 
 Status Badge: Se tudo passar, a trava do PR é liberada para merge e a badge no topo do repositório fica verde (CI: passing).
+
+
+
+Prisma antes de commitar 
+npx prisma generate
+npx prisma migrate dev --name <nome-da-migration>
+
+Prisma no postinstall 
+O postinstall é um hook do npm que é acionado automaticamente toda vez que você instala ou atualiza dependências (npm install ou npm update).
+
+No seu caso, ele está configurado para rodar o comando npx prisma generate.
+
+Portanto, sempre que você rodar npm install (ou npm i) no seu projeto, o script irá: 
+
+
+**Validação estatíca imediata**
+```
+npx tsc --noEmit - Valida se todos os tipos do TypeScript estão corretos.
+npm run lint — Garante as regras de estilo e boas práticas de código.
+```

@@ -1,9 +1,11 @@
 # restaurant-api-typescript
 Restaurant API (TypeScript)
 
-![CI Status](https://github.com/SEU_USUARIO/NOME_DO_REPOSITORIO/actions/workflows/ci.yml/badge.svg)
+![CI Pipeline](https://github.com/miguelbtavaresoliveira-tech/restaurant-api-typescript/actions/workflows/ci.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)
+![Fastify](https://img.shields.io/badge/Fastify-5.12-black?logo=fastify)
 ![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748?logo=prisma)
+![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)
 
 **Padrões de Código e Versionamento**
 - **Git Flow:** Trabalho isolado por branches (`feat/`, `fix/`, `test/`). Commits diretos na `main` são bloqueados.

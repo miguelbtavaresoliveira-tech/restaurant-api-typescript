@@ -13,14 +13,14 @@ export class AuthService {
             },
         })
 
-        if(!user) {
+        if (!user) {
             throw new Error("Usuario não encontrado")
         }
 
         const isPasswordValid = await bcrypt.compare(data.password, user.senha)
 
         if (!isPasswordValid) {
-            throw new Error("Credencias inválidas")
+            throw new Error("Credenciais inválidas")
         }
 
         const token = signToken({ id: user.id, role: user.papel })
@@ -33,7 +33,7 @@ export class AuthService {
                 token,
             },
         })
-        return { message: "Logout realizado com sucesso!"}
+        return { message: "Logout realizado com sucesso!" }
     }
 
     async forgotPassword(email: string) {

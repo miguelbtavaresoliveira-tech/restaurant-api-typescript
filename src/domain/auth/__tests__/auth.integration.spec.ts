@@ -11,12 +11,14 @@ describe('AuthService (Integração)', () => {
     authService = new AuthService()
 
     // Limpa a tabela de usuários do banco Docker antes de cada teste
+    await prisma.invalidToken.deleteMany()
     await prisma.refreshToken.deleteMany()
     await prisma.usuario.deleteMany()
   })
 
   afterAll(async () => {
     // Limpeza final do banco após rodar a suíte
+    await prisma.invalidToken.deleteMany()
     await prisma.refreshToken.deleteMany()
     await prisma.usuario.deleteMany()
     await prisma.$disconnect()

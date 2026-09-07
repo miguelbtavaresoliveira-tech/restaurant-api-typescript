@@ -32,10 +32,10 @@ export const authController = {
 
             const { user, token } = await authService.login({ email, password }) 
 
-            return reply.status(201).send({ user, email })
+            return reply.status(200).send({ user, token })
 
         } catch (error: any) {
-            if(error.message === "Usuário não encontrado") {
+            if(error.message === "Usuario não encontrado") {
                 return reply.status(401).send({ message: "Usuário não encontrado"})
             }
 

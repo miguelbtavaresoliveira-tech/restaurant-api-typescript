@@ -4,10 +4,10 @@ import { prismaMock } from '@/shared/testing/prisma.mock.js'
 import { makeUsuario } from '@/shared/testing/factories/make-usuario.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { signToken, signResetToken } from '../../../shared/lib/jwt.js'
-import { sendResetEmail } from '../../../shared/lib/mailer.js'
+import { signToken, signResetToken } from '@/shared/lib/jwt.js'
+import { sendResetEmail } from '@/shared/lib/mailer.js'
 
-// Mock das bibliotecas externas e utilitários
+// Mock das bibliotecas externas e utilitários usando aliases consistentes (@/)
 vi.mock('bcryptjs', () => ({
   default: {
     compare: vi.fn(),
@@ -21,14 +21,20 @@ vi.mock('jsonwebtoken', () => ({
   },
 }))
 
-vi.mock('../../../shared/lib/jwt.js', () => ({
+vi.mock('@/shared/lib/jwt.js', () => ({
   signToken: vi.fn(),
   signResetToken: vi.fn(),
 }))
 
-vi.mock('../../../shared/lib/mailer.js', () => ({
+vi.mock('@/shared/lib/mailer.js', () => ({
   sendResetEmail: vi.fn(),
 }))
+
+vi.mock('@/shared/lib/prisma.js', async () => {
+  const { prismaMock } = await import('@/shared/testing/prisma.mock.js')
+  return { prisma: prismaMock }
+})
+
 
 describe('AuthService (Unidade)', () => {
   let authService: AuthService
@@ -36,11 +42,20 @@ describe('AuthService (Unidade)', () => {
   beforeEach(() => {
     authService = new AuthService()
     vi.clearAllMocks()
+
+    // Resoluções padrão para evitar erros de retorno undefined no Prisma
+    prismaMock.usuario.findUnique.mockResolvedValue(null)
+    prismaMock.usuario.findFirst.mockResolvedValue(null)
+    prismaMock.usuario.update.mockResolvedValue({} as any)
+    prismaMock.invalidToken.create.mockResolvedValue({
+      id: 1,
+      token: 'fake_token',
+      criadoEm: new Date(),
+    })
   })
 
   describe('login', () => {
     it('deve realizar o login com sucesso e retornar o usuário com o token', async () => {
-      // Uso da factory especificando apenas os campos necessários para a regra do teste
       const fakeUser = makeUsuario({
         email: 'joao@restaurante.com',
         senha: 'hash_da_senha',
@@ -79,7 +94,7 @@ describe('AuthService (Unidade)', () => {
 
       await expect(
         authService.login({ email: 'joao@restaurante.com', password: 'senha_errada' })
-      ).rejects.toThrow('Credencias inválidas')
+      ).rejects.toThrow('Credenciais inválidas')
     })
   })
 

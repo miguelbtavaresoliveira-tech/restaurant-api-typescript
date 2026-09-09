@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { prismaMock } from '../../../shared/testing/prisma.mock.js'
-import { makeUsuario } from '../../../shared/testing/factories/make-usuario'
+import { makeUsuario } from '../../../shared/testing/factories/make-usuario.js'
 import bcrypt from 'bcryptjs'
 import { signToken, signRefreshToken } from '../../../shared/lib/jwt.js'
 

@@ -11,15 +11,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
 
         const token = authheader.split(" ")[1]
 
-        const invalidToken = await prisma.invalidToken.findFirst({
-            where: {
-                token,
-            }
-        })
 
-        if (invalidToken) {
-            return reply.status(401).send({ message: "Token inválido ou expirado " })
-        }
 
         const decoded = verifyToken(token)
 

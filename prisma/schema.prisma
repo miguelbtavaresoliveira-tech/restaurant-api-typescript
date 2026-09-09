@@ -1,11 +1,5 @@
-// ============================================================
-// RESTAURANT API — SCHEMA REFINADO
-// Baseado no seu draft, com correções e adições de complexidade
-// ============================================================
-
 generator client {
-  provider        = "prisma-client-js"
-  
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -13,9 +7,156 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ------------------------------------------------------------
-// ENUMS
-// ------------------------------------------------------------
+model User {
+  name          String
+  email         String         @unique
+  password      String
+  role          Role           @default(WAITER)
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  id            Int            @id @default(autoincrement())
+  logs          AuditLog[]
+  orders        Order[]        @relation("WaiterOrders")
+  payments      Payment[]      @relation("WaiterPayments")
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  tokenHash String   @unique
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Table {
+  number       Int           @unique
+  capacity     Int
+  status       TableStatus   @default(AVAILABLE)
+  createdAt    DateTime      @default(now())
+  id           Int           @id @default(autoincrement())
+  comandas     Comanda[]
+  reservations Reservation[]
+
+  @@map("tables")
+}
+
+model Reservation {
+  customerName  String
+  customerPhone String?
+  partySize     Int
+  reservedFor   DateTime
+  createdAt     DateTime  @default(now())
+  cancelledAt   DateTime?
+  id            Int       @id @default(autoincrement())
+  tableId       Int
+  table         Table     @relation(fields: [tableId], references: [id])
+
+  @@index([tableId, reservedFor])
+  @@map("reservations")
+}
+
+model Comanda {
+  number        Int
+  customerName  String?
+  status        ComandaStatus @default(OPEN)
+  serviceCharge Decimal       @default(0) @db.Decimal(5, 2)
+  createdAt     DateTime      @default(now())
+  closedAt      DateTime?
+  id            Int           @id @default(autoincrement())
+  tableId       Int
+  table         Table         @relation(fields: [tableId], references: [id])
+  orders        Order[]
+  payments      Payment[]
+
+  @@index([tableId, status])
+  @@map("comandas")
+}
+
+model Category {
+  name     String    @unique
+  id       Int       @id @default(autoincrement())
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  name        String
+  description String?
+  price       Decimal     @db.Decimal(10, 2)
+  isAvailable Boolean     @default(true)
+  id          Int         @id @default(autoincrement())
+  categoryId  Int
+  orderItems  OrderItem[]
+  category    Category    @relation(fields: [categoryId], references: [id])
+
+  @@map("products")
+}
+
+model Order {
+  status    OrderStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  id        Int         @id @default(autoincrement())
+  comandaId Int
+  waiterId  Int?
+  items     OrderItem[]
+  comanda   Comanda     @relation(fields: [comandaId], references: [id])
+  waiter    User?       @relation("WaiterOrders", fields: [waiterId], references: [id])
+
+  @@index([comandaId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  notes     String?
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  id            Int           @id @default(autoincrement())
+  comandaId     Int
+  waiterId      Int
+  comanda       Comanda       @relation(fields: [comandaId], references: [id])
+  waiter        User          @relation("WaiterPayments", fields: [waiterId], references: [id])
+
+  @@index([comandaId])
+  @@map("payments")
+}
+
+model AuditLog {
+  action    String
+  details   Json
+  createdAt DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
 
 enum Role {
   ADMIN
@@ -34,7 +175,7 @@ enum ComandaStatus {
   OPEN
   PAYMENT_PENDING
   CLOSED
-  CANCELLED // ex: cliente saiu sem consumir nada / erro de abertura
+  CANCELLED
 }
 
 enum OrderStatus {
@@ -45,7 +186,6 @@ enum OrderStatus {
   CANCELLED
 }
 
-// NOVO: pagamento tem ciclo de vida próprio (cartão pode falhar)
 enum PaymentStatus {
   PENDING
   COMPLETED
@@ -58,198 +198,4 @@ enum PaymentMethod {
   CREDIT_CARD
   DEBIT_CARD
   CASH
-}
-
-// ------------------------------------------------------------
-// AUTH / JWT
-// ------------------------------------------------------------
-
-model User {
-  id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  password     String
-  role         Role     @default(WAITER)
-  isActive     Boolean  @default(true) // soft-disable em vez de deletar
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  orders        Order[]        @relation("WaiterOrders")
-  payments      Payment[]      @relation("WaiterPayments")
-  logs          AuditLog[]
-  refreshTokens RefreshToken[]
-
-  @@map("users")
-}
-
-// NOVO: suporte real a JWT (access + refresh) com revogação
-// Sem isso, "JWT" no README fica só no login — aqui mostra
-// que você entende rotação de token e logout seguro.
-model RefreshToken {
-  id        String   @id @default(uuid())
-  userId    String
-  tokenHash String   @unique // nunca armazene o token puro
-  revoked   Boolean  @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("refresh_tokens")
-}
-
-// ------------------------------------------------------------
-// MESAS / RESERVAS
-// ------------------------------------------------------------
-
-model Table {
-  id        String      @id @default(uuid())
-  number    Int         @unique
-  capacity  Int
-  status    TableStatus @default(AVAILABLE)
-  createdAt DateTime    @default(now())
-
-  comandas     Comanda[]
-  reservations Reservation[]
-
-  @@map("tables")
-}
-
-// NOVO: dá corpo ao TableStatus.RESERVED, que no draft original
-// existia no enum mas não tinha nenhuma tabela por trás.
-model Reservation {
-  id            String   @id @default(uuid())
-  tableId       String
-  customerName  String
-  customerPhone String?
-  partySize     Int
-  reservedFor   DateTime
-  createdAt     DateTime @default(now())
-  cancelledAt   DateTime?
-
-  table Table @relation(fields: [tableId], references: [id])
-
-  @@index([tableId, reservedFor])
-  @@map("reservations")
-}
-
-// ------------------------------------------------------------
-// COMANDA (1 mesa : N comandas ativas)
-// ------------------------------------------------------------
-
-model Comanda {
-  id             String        @id @default(uuid())
-  number         Int
-  customerName   String?
-  status         ComandaStatus @default(OPEN)
-  tableId        String
-  serviceCharge  Decimal       @default(0) @db.Decimal(5, 2) // % taxa de serviço, ex: 10.00
-  createdAt      DateTime      @default(now())
-  closedAt       DateTime?
-
-  table    Table     @relation(fields: [tableId], references: [id])
-  orders   Order[]
-  payments Payment[]
-
-  @@index([tableId, status])
-  @@map("comandas")
-}
-
-// ------------------------------------------------------------
-// CARDÁPIO
-// ------------------------------------------------------------
-
-model Category {
-  id       String    @id @default(uuid())
-  name     String    @unique
-  products Product[]
-
-  @@map("categories")
-}
-
-model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  isAvailable Boolean  @default(true)
-  categoryId  String
-
-  category   Category    @relation(fields: [categoryId], references: [id])
-  orderItems OrderItem[]
-
-  @@map("products")
-}
-
-// ------------------------------------------------------------
-// PEDIDOS
-// ------------------------------------------------------------
-
-model Order {
-  id        String      @id @default(uuid())
-  comandaId String
-  waiterId  String?
-  status    OrderStatus @default(PENDING)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
-  comanda Comanda     @relation(fields: [comandaId], references: [id])
-  waiter  User?       @relation("WaiterOrders", fields: [waiterId], references: [id])
-  items   OrderItem[]
-
-  @@index([comandaId])
-  @@index([status]) // painel da cozinha filtra por status o tempo todo
-  @@map("orders")
-}
-
-model OrderItem {
-  id        String  @id @default(uuid())
-  orderId   String
-  productId String
-  quantity  Int
-  unitPrice Decimal @db.Decimal(10, 2) // preço congelado no momento do pedido
-  notes     String?
-
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-
-  @@map("order_items")
-}
-
-// ------------------------------------------------------------
-// PAGAMENTOS (fracionados por comanda)
-// ------------------------------------------------------------
-
-model Payment {
-  id            String        @id @default(uuid())
-  comandaId     String
-  waiterId      String
-  amount        Decimal       @db.Decimal(10, 2)
-  paymentMethod PaymentMethod
-  status        PaymentStatus @default(PENDING)
-  createdAt     DateTime      @default(now())
-
-  comanda Comanda @relation(fields: [comandaId], references: [id])
-  waiter  User    @relation("WaiterPayments", fields: [waiterId], references: [id])
-
-  @@index([comandaId])
-  @@map("payments")
-}
-
-// ------------------------------------------------------------
-// AUDITORIA
-// ------------------------------------------------------------
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?
-  action    String
-  details   Json // Json nativo do Postgres em vez de String cru
-  createdAt DateTime @default(now())
-
-  user User? @relation(fields: [userId], references: [id])
-
-  @@index([userId, createdAt])
-  @@map("audit_logs")
 }

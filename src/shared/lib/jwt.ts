@@ -1,4 +1,4 @@
-import { UserRole } from '@prisma/client'
+import { Role } from '@prisma/client'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET
@@ -9,13 +9,13 @@ if (!JWT_SECRET) {
 }
 const JWT_EXPIRES_IN = '1h'
 
-export function signToken(payload: {id: number, role: UserRole }): string {
+export function signToken(payload: {id: number, role: Role }): string {
     return jwt.sign(payload, JWT_SECRET!, {
         expiresIn: JWT_EXPIRES_IN,
     })
 }
 
-export function signRefreshToken(payload: {id: number, role: UserRole }) {
+export function signRefreshToken(payload: {id: number, role: Role }) {
     return jwt.sign(payload, JWT_SECRET!, { expiresIn: '7d' })
 }
 

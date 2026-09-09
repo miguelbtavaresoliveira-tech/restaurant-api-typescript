@@ -1,6 +1,7 @@
 import "dotenv/config"
-import Fastify from 'fastify'
+import Fastify from 'fastify';
 import cors from '@fastify/cors'
+import { initScheduleJobs } from './shared/jobs/index.js';
 
 // Import de rotas 
 import { authRoutes } from './domain/auth/auth.routes.js'
@@ -17,7 +18,8 @@ export const start = async () => {
             origin: true,
             methods: ['GET', 'POST', 'PUT', 'DELETE'],
             credentials: true,
-        })
+        });
+        initScheduleJobs();
 
 
         // Rota raiz com a mensagem e lista de endpoints

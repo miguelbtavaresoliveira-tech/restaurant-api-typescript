@@ -15,8 +15,8 @@ export function signToken(payload: {id: number, role: UserRole }): string {
     })
 }
 
-export function signResetToken(email: string) {
-    return jwt.sign({ email }, JWT_SECRET!, { expiresIn: '15m'})
+export function signRefreshToken(payload: {id: number, role: UserRole }) {
+    return jwt.sign(payload, JWT_SECRET!, { expiresIn: '7d' })
 }
 
 export function verifyToken(token: string) {

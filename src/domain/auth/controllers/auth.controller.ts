@@ -68,19 +68,9 @@ export const authController = {
     },
 
     async forgotPassword(request: FastifyRequest<{ Body: ForgotPasswordBody }>, reply: FastifyReply,) {
-        const result = forgotPasswordSchema.safeParse(request.body)
-        if(!result.success) {
-            return reply.status(400).send({
-                message: "Dados inválidos",
-                errors: formatError(result),
-            })
-        }
-
-        const { email } = result.data
-        await authService.forgotPassword(email)
-        return reply.send({ message: "Um link foi enviado para o e-mail" })
-
+        return reply.status(410).send({ message: "Forgot password endpoint removed" })
     },
+
 
     async resetPassword(
         request: FastifyRequest <{Body: ResetPasswordBody}>, 

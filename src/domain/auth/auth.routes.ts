@@ -18,9 +18,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         }
     }, authController.login)
 
-    fastify.post("/forgot-password", authController.forgotPassword)
 
-    fastify.post("/reset-password", authController.resetPassword)
 
     // Rota de logout precisa authenticação
     fastify.post("/logout", {

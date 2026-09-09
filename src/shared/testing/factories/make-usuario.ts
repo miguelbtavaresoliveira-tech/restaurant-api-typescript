@@ -8,7 +8,7 @@ export function makeUsuario(override: Partial<User> = {}): User {
     name: faker.person.fullName(),
     email: faker.internet.email(),
     password: faker.internet.password({ length: 10 }),
-    role: Role.USER,
+    role: Role.CUSTOMER,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),

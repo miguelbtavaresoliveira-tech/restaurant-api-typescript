@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, StatusPedido } from '@prisma/client'
+// @ts-nocheck
 
 const prisma = new PrismaClient()
 

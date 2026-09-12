@@ -55,3 +55,8 @@ Portanto, sempre que você rodar npm install (ou npm i) no seu projeto, o script
 npx tsc --noEmit - Valida se todos os tipos do TypeScript estão corretos.
 npm run lint — Garante as regras de estilo e boas práticas de código.
 ```
+
+Como executar apenas um tipo de teste
+- Unit: npm run test -- src/domain/user/test/user.service.unit.test.ts
+- Integration: npm run test -- src/domain/user/test/user.service.integration.test.ts
+- E2E: npm run test -- src/domain/user/test/user.service.e2e.test.ts

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UserService } from '../../service/user.service.js';
+import { UserService } from '../service/user.service.js';
 
 describe('User Service', () => {
   const service = new UserService();

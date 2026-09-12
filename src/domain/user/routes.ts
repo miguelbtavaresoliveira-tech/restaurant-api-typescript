@@ -1,16 +1,35 @@
+// src/modules/user/routes/user.routes.ts
 import { FastifyInstance } from 'fastify';
-import { userController } from './controller/user.controller.js';
-import { authorize } from '../../shared/middlewares/authorization.js';
-import { Role } from '@prisma/client';
+import { UserController } from './controller/user.controller.js';
+import { validate } from '../../shared/middlewares/validate.middleware.js';
+import { 
+  createUserSchema, 
+  updateUserSchema, 
+  changePasswordSchema 
+} from './schema/user.schema.js';
 
 export async function userRoutes(fastify: FastifyInstance) {
-  // All user routes require ADMIN role
-  fastify.get('/users', { preHandler: authorize([Role.ADMIN]) }, userController.getAll);
-  fastify.get('/users/:id', { preHandler: authorize([Role.ADMIN]) }, userController.getById);
-  fastify.post('/users', { preHandler: authorize([Role.ADMIN]) }, userController.create);
-  fastify.patch('/users/:id', { preHandler: authorize([Role.ADMIN]) }, userController.update);
-  fastify.patch('/users/:id/deactivate', { preHandler: authorize([Role.ADMIN]) }, userController.deactivate);
-  fastify.patch('/users/:id/reactivate', { preHandler: authorize([Role.ADMIN]) }, userController.reactivate);
-  fastify.patch('/users/:id/password', { preHandler: authorize([Role.ADMIN]) }, userController.changePassword);
-  fastify.delete('/users/:id', { preHandler: authorize([Role.ADMIN]) }, userController.delete);
+  const userController = new UserController();
+
+  // middleware validate work first than controller
+  fastify.post(
+    '/users', 
+    { preHandler: [validate(createUserSchema)] }, 
+    userController.create
+  );
+
+  fastify.put(
+    '/users/:id', 
+    { preHandler: [validate(updateUserSchema)] }, 
+    userController.update
+  );
+
+  fastify.patch(
+    '/users/:id/change-password', 
+    { preHandler: [validate(changePasswordSchema)] }, 
+    userController.changePassword
+  );
+
+  fastify.get('/users', userController.getAll);
+  fastify.get('/users/:id', userController.getById);
 }

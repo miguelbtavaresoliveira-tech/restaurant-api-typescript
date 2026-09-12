@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { userController } from '../../controller/user.controller.js';
+import { UserController } from '../controller/user.controller.js';
 import { FastifyRequest, FastifyReply } from 'fastify';
+
+const userController = new UserController()
 
 describe('User Controller', () => {
   // Mock reply

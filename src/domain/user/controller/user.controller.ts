@@ -1,89 +1,110 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { Role } from '@prisma/client';
 import { UserService } from '../service/user.service.js';
-import { createUserSchema, updateUserSchema, changePasswordSchema, CreateUserDto, UpdateUserDto, ChangePasswordDto } from '../schema/user.schema.js';
-import { formatError } from '../../../shared/utils/errors/formatZodErrors.js';
-import { FastifyError } from 'fastify';
+import { 
+  type CreateUserDto, 
+  type UpdateUserDto, 
+  type ChangePasswordDto 
+} from '../schema/user.schema.js';
 
-const userService = new UserService();
+interface AuthenticatedUser {
+  id: number;
+  role: Role;
+}
 
-export const userController = {
-  async create(request: FastifyRequest, reply: FastifyReply) {
-    const result = createUserSchema.safeParse(request.body);
-    if (!result.success) {
-      return reply.status(400).send({ errors: formatError(result) });
-    }
-    // Placeholder: actual creation may be elsewhere; respond with created status.
-    return reply.status(201).send();
-  },
+export class UserController {
+  constructor(private readonly userService: UserService = new UserService()) {}
 
-  async getAll(request: FastifyRequest, reply: FastifyReply) {
-    const users = await userService.getAllUsers();
+  create = async (request: FastifyRequest, reply: FastifyReply) => {
+    const body = request.body as CreateUserDto;
+    const newUser = await this.userService.createUser(body);
+    return reply.status(201).send(newUser);
+  };
+
+  getAll = async (_request: FastifyRequest, reply: FastifyReply) => {
+    const users = await this.userService.getAllUsers();
     return reply.send(users);
-  },
+  };
 
-  async getById(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    try {
-      const user = await userService.getUserById(id);
-      return reply.send(user);
-    } catch (e) {
-      return reply.status(404).send({ message: (e as Error).message });
-    }
-  },
+  getById = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    const userId = Number(id);
 
-  async update(request: FastifyRequest<{ Params: { id: string }; Body: any }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const result = updateUserSchema.safeParse(request.body);
-    if (!result.success) {
-      return reply.status(400).send({ errors: formatError(result) });
+    if (isNaN(userId)) {
+      return reply.status(400).send({ message: 'Invalid ID format' });
     }
-    try {
-      const updated = await userService.updateUser(id, result.data as UpdateUserDto);
-      return reply.send(updated);
-    } catch (e) {
-      return reply.status(404).send({ message: (e as Error).message });
-    }
-  },
 
-  async deactivate(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    try {
-      const user = await userService.deactivateUser(id);
-      return reply.send(user);
-    } catch (e) {
-      return reply.status(404).send({ message: (e as Error).message });
-    }
-  },
+    const user = await this.userService.getUserById(userId);
+    return reply.send(user);
+  };
 
-  async reactivate(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const { id } = request.params;
-    try {
-      const user = await userService.reactivateUser(id);
-      return reply.send(user);
-    } catch (e) {
-      return reply.status(404).send({ message: (e as Error).message });
-    }
-  },
+  update = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    const userId = Number(id);
 
-  async changePassword(request: FastifyRequest<{ Params: { id: string }; Body: any }>, reply: FastifyReply) {
-    const { id } = request.params;
-    const result = changePasswordSchema.safeParse(request.body);
-    if (!result.success) {
-      return reply.status(400).send({ errors: formatError(result) });
+    if (isNaN(userId)) {
+      return reply.status(400).send({ message: 'Invalid ID format' });
     }
-    // requester role is in request.user (set by auth middleware)
-    const requester = (request as any).user as { role: string };
-    try {
-      await userService.changePassword(id, result.data.newPassword, requester.role, result.data.currentPassword);
-      return reply.send({ message: 'Password updated successfully' });
-    } catch (e) {
-      const status = (e as Error).message.includes('not found') ? 404 : 400;
-      return reply.status(status).send({ message: (e as Error).message });
-    }
-  },
 
-  async delete(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    // Placeholder: delete logic not required for current task
-    return reply.send();
-  },
-};
+    const body = request.body as UpdateUserDto;
+    const updated = await this.userService.updateUser(userId, body);
+    return reply.send(updated);
+  };
+
+  deactivate = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    const userId = Number(id);
+
+    if (isNaN(userId)) {
+      return reply.status(400).send({ message: 'Invalid ID format' });
+    }
+
+    const user = await this.userService.deactivateUser(userId);
+    return reply.send(user);
+  };
+
+  reactivate = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    const userId = Number(id);
+
+    if (isNaN(userId)) {
+      return reply.status(400).send({ message: 'Invalid ID format' });
+    }
+
+    const user = await this.userService.reactivateUser(userId);
+    return reply.send(user);
+  };
+
+  changePassword = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    const userId = Number(id);
+
+    if (isNaN(userId)) {
+      return reply.status(400).send({ message: 'Invalid ID format' });
+    }
+
+    const body = request.body as ChangePasswordDto;
+    const requester = (request as FastifyRequest & { user: AuthenticatedUser }).user;
+
+    await this.userService.changePassword(
+      userId,
+      body.newPassword,
+      requester.role,
+      body.currentPassword
+    );
+
+    return reply.send({ message: 'Password updated successfully' });
+  };
+
+  delete = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    const userId = Number(id);
+
+    if (isNaN(userId)) {
+      return reply.status(400).send({ message: 'Invalid ID format' });
+    }
+
+    await this.userService.deleteUser(userId);
+    return reply.status(204).send();
+  };
+}

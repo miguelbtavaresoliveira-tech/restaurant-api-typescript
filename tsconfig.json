@@ -10,8 +10,9 @@
     "skipLibCheck": true,
     "moduleResolution": "NodeNext",
     "outDir": "./build",
-    "baseUrl": "./src",
-    "paths": { "@/*": ["*" ] }
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "exclude": ["prisma/seed.ts", "src/**/__tests__/**", "src/shared/testing/**"]
 }

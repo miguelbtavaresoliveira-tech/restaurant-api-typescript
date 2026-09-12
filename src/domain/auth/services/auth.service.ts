@@ -2,6 +2,9 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '../../../shared/lib/prisma.js'
 import { signToken, signRefreshToken, verifyToken } from '../../../shared/lib/jwt.js'
 
+export const BCRYPT_SALT_ROUNDS = 12
+
+
 export class AuthService {
     async resetPassword(token: string, newPassword: string) {
         // Placeholder implementation for password reset.
@@ -14,7 +17,11 @@ export class AuthService {
             where: { email: data.email },
         })
         if (!user) {
-            throw new Error("Usuario não encontrado")
+            throw new Error('Credenciais inválidas')
+        }
+        // Check if the user is active
+        if (user.isActive === false) {
+            throw new Error('usuario não ativado, login negado')
         }
         const isPasswordValid = await bcrypt.compare(data.password, user.password)
         if (!isPasswordValid) {
@@ -22,8 +29,8 @@ export class AuthService {
         }
         const token = signToken({ id: user.id, role: user.role })
         const refreshToken = signRefreshToken({ id: user.id, role: user.role })
-        // Save refresh token hash
-        const tokenHash = await bcrypt.hash(refreshToken, 10)
+        // Save refresh token hash with proper salt rounds
+        const tokenHash = await bcrypt.hash(refreshToken, BCRYPT_SALT_ROUNDS)
         await prisma.refreshToken.create({
             data: { userId: user.id, tokenHash, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
         })

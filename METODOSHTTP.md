@@ -12,8 +12,9 @@
 - **POST /auth/refresh** — Público. Valida e rotaciona o Refresh Token hash no banco de dados. `[RF02, RNF01]`
 - **GET /users** — ADMIN. Lista todos os usuários/funcionários cadastrados no sistema para gestão e auditoria. `[RF01, RNF02]`
 - **POST /users** — ADMIN. Exclusivo para o Administrador cadastrar novos usuários (funcionários do estabelecimento, com foco principal nos garçons WAITER e administradores ADMIN). A cozinha opera via painel/terminal sem necessidade de contas individuais de usuário. `[RF01, RNF02, RNF05]`
-- **PATCH /users/:id/deactivate** — ADMIN. Altera `isActive = false` para desativação lógica do funcionário, mantendo o histórico de auditoria e operacional intacto. Exclui tokens ativos vinculados em cascata. `[RF03, RNF08]`
 - **POST /auth/logout** — revoga o Refresh Token (invalida o hash no banco).
+
+- **PATCH /users/:id/deactivate** — ADMIN. Altera `isActive = false` para desativação lógica do funcionário, mantendo o histórico de auditoria e operacional intacto. Exclui tokens ativos vinculados em cascata. `[RF03, RNF08]`
 - **GET /users/:id** — detalhe de um usuário específico.
 - **PATCH /users/:id** — editar dados (nome, e-mail, role).
 - **PATCH /users/:id/reactivate** — reverter a desativação lógica.

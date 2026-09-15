@@ -70,16 +70,16 @@ Abaixo está o detalhamento dos domínios, regras de negócio e métodos HTTP da
 
 ### 2. Mesas e Reservas
 
-#### Endpoints originais
+#### Endpoints 
 - **POST /tables** — ADMIN. Cadastra nova mesa no estabelecimento garantindo a unicidade do número. `[RF04, RNF05]`
 - **PATCH /tables/:id/status** — WAITER, ADMIN. Atualiza o status da mesa (AVAILABLE, OCCUPIED, RESERVED).
   - **Restrição:** A transição manual para AVAILABLE é bloqueada caso existam comandas atreladas à mesa com status diferente de CLOSED. `[RF04, Regra A]`
+  - **GET /tables** e **GET /tables/:id** — listagem/consulta (essencial para o painel visual do salão).
+- **PATCH /tables/:id** — editar capacidade/número da mesa.
+- **DELETE /tables/:id** - deletar mesa 
+
 - **POST /reservations** — WAITER, ADMIN. Registra reserva armazenando nome, telefone do cliente, quantidade de pessoas e data/hora agendada. `[RF05]`
 - **PATCH /reservations/:id/cancel** — WAITER, ADMIN. Cancela a reserva de uma mesa. `[RF05]`
-
-#### Endpoints complementares
-- **GET /tables** e **GET /tables/:id** — listagem/consulta (essencial para o painel visual do salão).
-- **PATCH /tables/:id** — editar capacidade/número da mesa.
 - **GET /reservations** e **GET /reservations/:id**.
 - **PATCH /reservations/:id** — reagendar/editar dados da reserva.
 

@@ -8,6 +8,7 @@ datasource db {
 }
 
 model User {
+  id            Int            @id @default(autoincrement())
   name          String
   email         String         @unique
   password      String
@@ -15,7 +16,6 @@ model User {
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  id            Int            @id @default(autoincrement())
   logs          AuditLog[]
   orders        Order[]        @relation("WaiterOrders")
   payments      Payment[]      @relation("WaiterPayments")
@@ -25,12 +25,12 @@ model User {
 }
 
 model RefreshToken {
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-  revoked   Boolean  @default(false)
-  tokenHash String   @unique
   id        Int      @id @default(autoincrement())
+  tokenHash String   @unique
   userId    Int
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -38,26 +38,26 @@ model RefreshToken {
 }
 
 model Table {
-  number       Int           @unique
-  capacity     Int
-  status       TableStatus   @default(AVAILABLE)
-  createdAt    DateTime      @default(now())
-  id           Int           @id @default(autoincrement())
-  comandas     Comanda[]
+  id           Int            @id @default(autoincrement())
+  number       Int            @unique
+  status       TableStatus    @default(AVAILABLE)
+  deletedAt    DateTime?
+  createdAt    DateTime       @default(now())
+  comandas     ComandaTable[]
   reservations Reservation[]
 
   @@map("tables")
 }
 
 model Reservation {
+  id            Int       @id @default(autoincrement())
+  tableId       Int
   customerName  String
   customerPhone String?
   partySize     Int
   reservedFor   DateTime
-  createdAt     DateTime  @default(now())
   cancelledAt   DateTime?
-  id            Int       @id @default(autoincrement())
-  tableId       Int
+  createdAt     DateTime  @default(now())
   table         Table     @relation(fields: [tableId], references: [id])
 
   @@index([tableId, reservedFor])
@@ -65,37 +65,48 @@ model Reservation {
 }
 
 model Comanda {
+  id            Int            @id @default(autoincrement())
   number        Int
   customerName  String?
-  status        ComandaStatus @default(OPEN)
-  serviceCharge Decimal       @default(0) @db.Decimal(5, 2)
-  createdAt     DateTime      @default(now())
+  peopleCount   Int            @default(1)
+  status        ComandaStatus  @default(OPEN)
+  serviceCharge Decimal        @default(0) @db.Decimal(5, 2)
+  createdAt     DateTime       @default(now())
   closedAt      DateTime?
-  id            Int           @id @default(autoincrement())
-  tableId       Int
-  table         Table         @relation(fields: [tableId], references: [id])
+  tables        ComandaTable[]
   orders        Order[]
   payments      Payment[]
 
-  @@index([tableId, status])
   @@map("comandas")
 }
 
+model ComandaTable {
+  comandaId Int
+  tableId   Int
+  isMain    Boolean @default(false)
+
+  comanda Comanda @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  table   Table   @relation(fields: [tableId], references: [id])
+
+  @@id([comandaId, tableId])
+  @@map("session_tables")
+}
+
 model Category {
-  name     String    @unique
   id       Int       @id @default(autoincrement())
+  name     String    @unique
   products Product[]
 
   @@map("categories")
 }
 
 model Product {
+  id          Int         @id @default(autoincrement())
+  categoryId  Int
   name        String
   description String?
   price       Decimal     @db.Decimal(10, 2)
   isAvailable Boolean     @default(true)
-  id          Int         @id @default(autoincrement())
-  categoryId  Int
   orderItems  OrderItem[]
   category    Category    @relation(fields: [categoryId], references: [id])
 
@@ -103,12 +114,12 @@ model Product {
 }
 
 model Order {
-  status    OrderStatus @default(PENDING)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
   id        Int         @id @default(autoincrement())
   comandaId Int
   waiterId  Int?
+  status    OrderStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
   items     OrderItem[]
   comanda   Comanda     @relation(fields: [comandaId], references: [id])
   waiter    User?       @relation("WaiterOrders", fields: [waiterId], references: [id])
@@ -119,12 +130,12 @@ model Order {
 }
 
 model OrderItem {
-  quantity  Int
-  unitPrice Decimal @db.Decimal(10, 2)
-  notes     String?
   id        Int     @id @default(autoincrement())
   orderId   Int
   productId Int
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  notes     String?
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id])
 
@@ -132,13 +143,13 @@ model OrderItem {
 }
 
 model Payment {
+  id            Int           @id @default(autoincrement())
+  comandaId     Int
+  waiterId      Int
   amount        Decimal       @db.Decimal(10, 2)
   paymentMethod PaymentMethod
   status        PaymentStatus @default(PENDING)
   createdAt     DateTime      @default(now())
-  id            Int           @id @default(autoincrement())
-  comandaId     Int
-  waiterId      Int
   comanda       Comanda       @relation(fields: [comandaId], references: [id])
   waiter        User          @relation("WaiterPayments", fields: [waiterId], references: [id])
 
@@ -147,11 +158,11 @@ model Payment {
 }
 
 model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
   action    String
   details   Json
   createdAt DateTime @default(now())
-  id        Int      @id @default(autoincrement())
-  userId    Int?
   user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId, createdAt])
@@ -169,6 +180,8 @@ enum TableStatus {
   AVAILABLE
   OCCUPIED
   RESERVED
+  DIRTY
+  MAINTENANCE
 }
 
 enum ComandaStatus {

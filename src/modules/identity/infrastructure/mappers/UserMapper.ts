@@ -1,4 +1,4 @@
-import type { User as PrismaUser } from '@prisma/client';
+import type { User as PrismaUser, Role } from '@prisma/client';
 import { User } from '../../domain/entities/User.js';
 import { Email } from '../../domain/value-objects/Email.js';
 import { Roles, RoleName } from '../../domain/value-objects/Role.js';
@@ -20,11 +20,13 @@ export class UserMapper {
   }
 
   static toPersistence(user: User) {
+    // Prisma armazena role como enum único; usamos a primeira (mais privilegiada) role do domínio.
+    const primaryRole = user.roles.values[0] as unknown as Role;
     return {
       name: user.name,
       email: user.email.value,
       password: user.passwordHash,
-      role: user.roles.values,
+      role: primaryRole,
       isActive: user.isActive,
     };
   }

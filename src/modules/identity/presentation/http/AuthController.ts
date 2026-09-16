@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { DomainError } from '../../../../shared/domain/DomainError.js';
-import { formatZodErrors } from '../../../../shared/http/formatZodErrors.js';
+import { formatError } from '../../../../shared/http/errors/formatZodErrors.js';
 import {
   authBodySchema,
   forgotPasswordSchema,
@@ -33,7 +33,7 @@ export class AuthController {
   login = async (request: FastifyRequest, reply: FastifyReply) => {
     const result = authBodySchema.safeParse(request.body);
     if (!result.success) {
-      return reply.status(400).send({ message: 'Dados inválidos', errors: formatZodErrors(result) });
+      return reply.status(400).send({ message: 'Dados inválidos', errors: formatError(result) });
     }
 
     try {
@@ -78,7 +78,7 @@ export class AuthController {
   forgotPassword = async (request: FastifyRequest<{ Body: ForgotPasswordBody }>, reply: FastifyReply) => {
     const result = forgotPasswordSchema.safeParse(request.body);
     if (!result.success) {
-      return reply.status(400).send({ message: 'Dados inválidos', errors: formatZodErrors(result) });
+      return reply.status(400).send({ message: 'Dados inválidos', errors: formatError(result) });
     }
 
     await this.requestPasswordResetUseCase.execute(result.data.email);
@@ -89,7 +89,7 @@ export class AuthController {
   resetPassword = async (request: FastifyRequest<{ Body: ResetPasswordBody }>, reply: FastifyReply) => {
     const result = resetPasswordSchema.safeParse(request.body);
     if (!result.success) {
-      return reply.status(400).send({ message: 'Dados inválidos', errors: formatZodErrors(result) });
+      return reply.status(400).send({ message: 'Dados inválidos', errors: formatError(result) });
     }
 
     try {

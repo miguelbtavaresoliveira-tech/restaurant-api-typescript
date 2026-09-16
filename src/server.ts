@@ -4,7 +4,7 @@ import cors from '@fastify/cors'
 import { initScheduleJobs } from './shared/jobs/index.js';
 
 // Import de rotas 
-import { authRoutes } from './domain/auth/auth.routes.js'
+import { authRoutes } from './modules/identity/presentation/http/auth.routes.js'
 
 const app = Fastify({ logger: true })
 

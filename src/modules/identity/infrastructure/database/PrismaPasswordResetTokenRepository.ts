@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, PasswordResetToken as PrismaPasswordResetToken } from '@prisma/client';
 import { IPasswordResetTokenRepository } from '../../domain/repositories/IPasswordResetTokenRepository.js';
 import { PasswordResetToken } from '../../domain/entities/PasswordResetToken.js';
 
@@ -34,7 +34,7 @@ export class PrismaPasswordResetTokenRepository implements IPasswordResetTokenRe
     const rows = await this.prisma.passwordResetToken.findMany({
       where: { userId, usedAt: null, expiresAt: { gt: new Date() } },
     });
-    return rows.map((r) =>
+    return rows.map((r: PrismaPasswordResetToken) =>
       PasswordResetToken.create({ userId: r.userId, tokenHash: r.tokenHash, expiresAt: r.expiresAt, usedAt: r.usedAt }, r.id),
     );
   }

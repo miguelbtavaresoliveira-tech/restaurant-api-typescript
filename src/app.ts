@@ -3,7 +3,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 
 // Import de rotas 
-import { authRoutes } from './domain/auth/auth.routes.js'
+import { authRoutes } from './modules/identity/presentation/http/auth.routes.js'
 
 export async function buildApp() {
   const app = Fastify({ logger: false }) // logger desligado nos testes para não poluir o terminal

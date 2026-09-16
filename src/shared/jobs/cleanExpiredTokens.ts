@@ -1,14 +1,14 @@
-import { prisma } from '../../shared/lib/prisma.js';
+import { prisma } from '../infrastructure/database/prisma.js';
 
 /**
- * Deletes all refresh tokens that have expired.
+ * Deleta todos os refresh tokens que já expiraram.
  */
 export async function cleanExpiredTokens(): Promise<void> {
-    await prisma.refreshToken.deleteMany({
-        where: {
-            expiresAt: {
-                lt: new Date()
-            }
-        }
-    });
+  await prisma.refreshToken.deleteMany({
+    where: {
+      expiresAt: {
+        lt: new Date(),
+      },
+    },
+  });
 }

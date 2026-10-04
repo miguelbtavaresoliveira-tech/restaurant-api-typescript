@@ -1,173 +1,114 @@
-# restaurant-api-typescript
-Restaurant API (TypeScript) - Sistema de Comandas e PDV
+<p align="center">
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+</p>
 
-![CI Pipeline](https://github.com/miguelbtavaresoliveira-tech/restaurant-api-typescript/actions/workflows/ci.yml/badge.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)
-![Fastify](https://img.shields.io/badge/Fastify-5.12-black?logo=fastify)
-![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748?logo=prisma)
-![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)
+[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
+[circleci-url]: https://circleci.com/gh/nestjs/nest
 
-Esta é a API para gestão de comandas, mesas, cardápio, pedidos e pagamentos de um restaurante, desenvolvida com foco em segurança, auditoria e arquitetura sólida.
+  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
+    <p align="center">
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
+<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
+<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
+<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
+<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
+  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
+    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
+  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+</p>
+  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
+  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## 🛠️ Padrões de Código e Versionamento
-- **Git Flow:** Trabalho isolado por branches (`feat/`, `fix/`, `test/`). Commits diretos na `main` são bloqueados.
-- **Conventional Commits:** Mensagens padronizadas e validadas localmente via **Husky** e **Commitlint**.
+## Description
 
-## 🛡️ Garantia de Qualidade & CI/CD
-- **Validação Estática:** Checagem de tipos com `tsc --noEmit` no pré-commit e no CI.
-- **Integração Contínua (CI):** Pipeline no GitHub Actions executando migrations e suíte completa de testes (**Vitest**) em um container **PostgreSQL** dedicado a cada Pull Request.
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
-## 💻 Comandos Úteis (Desenvolvimento e Teste)
+## Project setup
 
 ```bash
-# Instalar dependências
-npm install
-
-# Subir banco de dados local via Docker
-docker-compose up -d
-
-# Rodar a API localmente
-npm run dev
-
-# Executar verificação de tipos
-npm run typecheck
-
-# Executar suíte completa de testes
-npm test
-
-# Executar apenas testes unitários ou E2E
-npm run test:unit
-npm run test:e2e
-
-# Gerar relatório de cobertura
-npm run test:cov
+$ npm install
 ```
 
----
+## Compile and run the project
 
-## 📖 Especificação do Sistema de Comandas / PDV
+```bash
+# development
+$ npm run start
 
-Abaixo está o detalhamento dos domínios, regras de negócio e métodos HTTP da API, unificados a partir da especificação do projeto:
+# watch mode
+$ npm run start:dev
 
-### 1. Autenticação e Usuários
+# production mode
+$ npm run start:prod
+```
 
-#### Endpoints originais
-- **POST /auth/login** — Público (Rate Limited). Valida e-mail e senha de funcionários cadastrados (ADMIN, WAITER). Armazena o Refresh Token exclusivamente como hash (`tokenHash`) no banco de dados. `[RF02, RNF01]`
-- **POST /auth/refresh** — Público. Valida e rotaciona o Refresh Token hash no banco de dados. `[RF02, RNF01]`
-- **GET /users** — ADMIN. Lista todos os usuários/funcionários cadastrados no sistema para gestão e auditoria. `[RF01, RNF02]`
-- **POST /users** — ADMIN. Exclusivo para o Administrador cadastrar novos usuários (funcionários do estabelecimento, com foco principal nos garçons WAITER e administradores ADMIN). A cozinha opera via painel/terminal sem necessidade de contas individuais de usuário. `[RF01, RNF02, RNF05]`
-- **POST /auth/logout** — revoga o Refresh Token (invalida o hash no banco).
-- **PATCH /users/:id/deactivate** — ADMIN. Altera `isActive = false` para desativação lógica do funcionário, mantendo o histórico de auditoria e operacional intacto. Exclui tokens ativos vinculados em cascata. `[RF03, RNF08]`
-- **GET /users/:id** — detalhe de um usuário específico.
-- **PATCH /users/:id** — editar dados (nome, e-mail, role).
-- **PATCH /users/:id/reactivate** — reverter a desativação lógica.
-- **PATCH /users/:id/password** — alterar senha (própria ou reset pelo ADMIN).
+## Run tests
 
-#### Regras complementares
-- Bloqueio temporário após N tentativas de login falhas (mitigar brute-force, complementando o Rate Limited de RNF01).
-- Rate limiting também em `/auth/refresh`, não só no login.
-- Log de auditoria em tentativas de login (sucesso/falha).
+```bash
+# unit tests
+$ npm run test
 
-### 2. Mesas e Reservas
+# e2e tests
+$ npm run test:e2e
 
-#### Endpoints 
-- **POST /tables** — ADMIN. Cadastra nova mesa no estabelecimento garantindo a unicidade do número. `[RF04, RNF05]`
-- **PATCH /tables/:id/status** — WAITER, ADMIN. Atualiza o status da mesa (AVAILABLE, OCCUPIED, RESERVED).
-  - **Restrição:** A transição manual para AVAILABLE é bloqueada caso existam comandas atreladas à mesa com status diferente de CLOSED. `[RF04, Regra A]`
-  - **GET /tables** e **GET /tables/:id** — listagem/consulta (essencial para o painel visual do salão).
-- **PATCH /tables/:id** — editar capacidade/número da mesa.
-- **DELETE /tables/:id** - deletar mesa 
+# test coverage
+$ npm run test:cov
+```
 
-- **POST /reservations** — WAITER, ADMIN. Registra reserva armazenando nome, telefone do cliente, quantidade de pessoas e data/hora agendada. `[RF05]`
-- **PATCH /reservations/:id/cancel** — WAITER, ADMIN. Cancela a reserva de uma mesa. `[RF05]`
-- **GET /reservations** e **GET /reservations/:id**.
-- **PATCH /reservations/:id** — reagendar/editar dados da reserva.
+## Deployment
 
-#### Regras complementares
-- Reserva deveria mudar o status da mesa para `RESERVED` automaticamente (hoje só a abertura de comanda altera status para `OCCUPIED`).
-- Validação de capacidade: quantidade de pessoas da reserva vs. capacidade da mesa.
-- Prevenção de conflito de horário (duas reservas na mesma mesa em horários que se sobrepõem).
-- Status de reserva além de "cancelada": `CONFIRMED`, `NO_SHOW`, `COMPLETED` — e regra de expiração automática (no-show após X minutos de atraso).
+When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
-### 3. Comandas
+If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
-#### Endpoints originais
-- **POST /comandas** — WAITER, ADMIN. Abertura de comanda vinculada a uma `tableId`. Altera automaticamente o status da mesa para OCCUPIED. `[RF06, Regra A]`
-- **PATCH /comandas/:id/service-charge** — WAITER, ADMIN. Atualiza o percentual da taxa de serviço armazenado estritamente como `Decimal`. `[RF07, RNF03]`
-- **PATCH /comandas/:id/close** — WAITER, ADMIN. Executado dentro de uma transação atômica (`prisma.$transaction`). Valida se a soma dos pagamentos com status COMPLETED cobre o total de consumo. Altera o status da comanda para CLOSED.
-  - **Liberação Automática da Mesa:** Se todas as comandas da mesa estiverem no status CLOSED, o status da mesa altera automaticamente para AVAILABLE. `[RF06, Regra A, RNF03]`
+```bash
+$ npm install -g @nestjs/mau
+$ mau deploy
+```
 
-#### Endpoints complementares
-- **GET /comandas** e **GET /comandas/:id** — listagem e detalhe (com itens e pagamentos).
-- **PATCH /comandas/:id/cancel** — cancelar comanda sem consumo/pagamento.
-- **POST /comandas/:id/transfer** — transferir comanda entre mesas (comum quando o cliente troca de lugar).
+With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
-#### Regras complementares
-- Como "todas as comandas da mesa" é mencionado na especificação original, o sistema parece suportar múltiplas comandas simultâneas por mesa (ex.: divisão por pessoa) — vale documentar explicitamente essa regra e um endpoint de split/merge de comandas.
-- Campo de desconto na comanda (percentual ou valor fixo) e quem autorizou (rastreabilidade).
+## Observability
 
-### 4. Cardápio
+In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
 
-#### Endpoints originais
-- **POST /categories** — ADMIN. Cria nova categoria de produtos garantindo nome único no banco de dados. `[RF08, RNF05]`
-- **POST /products** — ADMIN. Cadastra produto informando nome, descrição, disponibilidade (`isAvailable`) e preço persistido no tipo `Decimal`. `[RF09, RNF03]`
-- **PATCH /products/:id** — ADMIN. Atualiza dados ou preço do produto no cardápio.
-  - **Restrição:** Alterações de preços no cardápio não alteram retroativamente o `unitPrice` de itens gravados em pedidos anteriores ou em comandas abertas. `[RF09, Regra C, RNF04]`
+[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
 
-#### Endpoints complementares
-- **GET /categories**, **PATCH /categories/:id**, exclusão lógica de categoria.
-- **GET /products** (com filtro por categoria/disponibilidade) e **GET /products/:id**.
-- Exclusão lógica de produto (`isAvailable = false` via endpoint dedicado, não só PATCH genérico).
+- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
+- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
+- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
+- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
+- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
+- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
+- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
+- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
 
-#### Regras complementares
-- Upload de imagem do produto.
-- Modificadores/variações (tamanho, ponto da carne, adicionais) — se aplicável ao negócio.
-- Tempo de preparo estimado, alérgenos.
+## Resources
 
-### 5. Pedidos
+Check out a few resources that may come in handy when working with NestJS:
 
-#### Endpoints originais
-- **POST /orders** — WAITER, ADMIN. Lança pedido vinculado a uma comanda e grava o `waiterId` do garçom responsável. O preço unitário do produto é copiado atomicamente para `OrderItem.unitPrice` (`Decimal` imutável). Notifica o painel da cozinha em tempo real via WebSocket (PENDING). `[RF10, RF12, Regra B, Regra C, RNF03, RNF04]`
-- **PATCH /orders/:id/status** — WAITER, ADMIN (ou chave/token de terminal da cozinha). Transiciona o status do pedido (PENDING → IN_PREPARATION → READY → DELIVERED ou CANCELLED).
-  - **Observação:** Como a cozinha não necessita de usuários individuais, a mudança de status no painel da cozinha é autorizada via nível de permissão do terminal/dispositivo ou garçom/admin. Na alteração para READY, dispara notificação via WebSocket/SSE para os garçons. `[RF11, Regra B]`
+- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
+- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
+- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
+- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
+- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
+- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
+- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
+- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
+- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
 
-#### Endpoints complementares
-- **GET /orders** (por comanda) e **GET /orders/:id**.
-- Endpoint para cancelar item específico do pedido, com justificativa obrigatória e autorização (ADMIN) — importante para controle de perdas/fraude.
-- Campo de observação por item (ex.: "sem cebola", "ponto da carne").
+## Support
 
-#### Regras complementares
-- Status por item (`OrderItem.status`) além do status do pedido como um todo, já que itens diferentes podem estar em estágios diferentes de preparo na cozinha.
-- Cancelamento de item após `IN_PREPARATION` deveria gerar log de auditoria (RNF07) com motivo.
+Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
-### 6. Pagamentos e Auditoria
+## Stay in touch
 
-#### Endpoints originais
-- **POST /payments** — WAITER, ADMIN. Executado em `prisma.$transaction`. Registra o pagamento (métodos: PIX, CREDIT_CARD, DEBIT_CARD, CASH, valor: `Decimal`, e `waiterId` que recebeu). Suporta pagamentos fracionados recalculando o saldo isolado da comanda. `[RF13, RF14, Regra A, Regra B, RNF03]`
-- **GET /audit-logs** — ADMIN. Consulta o histórico completo de ações registradas no formato `JSONB`, utilizando índices em colunas de alta frequência de busca (como datas e `userId`). `[RF15, RNF06, RNF07]`
+- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
+- Website - [https://nestjs.com](https://nestjs.com/)
+- Twitter - [@nestframework](https://twitter.com/nestframework)
 
-#### Endpoints complementares
-- **GET /payments** (por comanda) — extrato de pagamentos.
-- **PATCH /payments/:id/refund** ou `/cancel` — correção de erro de lançamento.
-- **GET /audit-logs** com filtros (por tipo de ação, entidade, período) — hoje só menciona índices, não filtros explícitos.
-- Relatório de fechamento de caixa/turno (`GET /reports/cash-closing`) por garçom e por período.
+## License
 
-#### Regras complementares
-- Gorjeta (tip) separada da taxa de serviço, se o negócio distinguir os dois.
-- Idempotência em `POST /payments` para evitar cobrança duplicada em caso de retry de rede.
-- **Nota fiscal (NFC-e/NFe)** — se for um sistema real no Brasil, integração fiscal é praticamente obrigatória e não aparece na especificação original.
-
-### 7. Transversais (todo o sistema)
-
-- Paginação e filtros padronizados nos endpoints `GET` de listagem.
-- Padrão de erro HTTP consistente (formato de resposta de erro).
-- Versionamento de API (`/api/v1/...`).
-- `GET /health` para monitoramento.
-- Entidade **Cliente** (se houver fidelidade/histórico de consumo, hoje reserva só guarda nome/telefone).
-
----
-
-### Legenda de Referências
-- **RF** = Requisito Funcional
-- **RNF** = Requisito Não Funcional
-- **Regra A/B/C** = Regras de negócio referenciadas no documento original
+Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
